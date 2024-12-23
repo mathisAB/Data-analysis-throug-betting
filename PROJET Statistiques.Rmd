@@ -1,0 +1,485 @@
+---
+title: "Projet_Alban_Mathis"
+date: "2023-12-02"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+---
+
+# \textcolor{red}{\fontsize{1em}{1.75em}\selectfont\textbf{1. Description du projet}}
+
+Sujet : Pari sportif
+Intérêt : Existe-t-il un comportement optimal avec les paris sportifs autres que de ne pas y jouer ? 
+
+Introduction:
+
+Ce projet se penche sur une approche stratégique des paris sportifs, en mettant l'accent sur le tennis. L'objectif est de trouver des indices, à travers l'analyse de variables choisies, qui serait à surveiller avant de parier, et de prouver leur fiabilité. Ceci permettrai de maximiser le gain (qui peut s'avèrer tout de même négatif) mais donne des outils aux parieurs qui souhaitent adopter un comportement rationnel. L'analyse s'appuie sur une population de 361 tickets de paris, dont un échantillon de 100 tickets sera tiré aléatoirement. 
+
+# \textcolor{red}{\fontsize{1em}{1.75em}\selectfont\textbf{2. Descrition des données}}
+
+## \textcolor[RGB]{34,139,34}{\fontsize{0.75em}{1.75em}\selectfont\textbf{A) Choix du Sujet et Constitution de la Base de Données}}
+
+
+L'échantillon de 100 tickets sera sélectionné de manière aléatoire à partir de cette population mais ne se renouvellera pas, de façon à ce que nos analyses restent toujours pertinentes et justes. En effet nous avons remarqué que les résultats obtenus selon les différents échantillons sont très variables, cela est probablement dû à la base de données et à la nature du sujet d'étude. Chaque ticket contient les informations suivantes : la date du match; le joueur sur qui le pari porte; le genre dans lequel se joue le match; la mise pariée; la côte; le gains potentiel qui est égal à la côte fois la mise; et le résultat du pari. En plus de ça nous en avons donc déduis le retour sur investissement dégagé par ce pari (ROI), et nous y avons ajouté nous même le pourcentage de victoire du joueur sur l'année 2022 que nous avons trouvé pour chaque joueur sur https://www.tennisexplorer.com/list-players/ . 
+
+## \textcolor[RGB]{34,139,34}{\fontsize{0.75em}{1.75em}\selectfont\textbf{B) Synthèse des Données}}
+
+(a) Définition de la Population, des Unités Statistiques, et des Variables: - Population: 361 tickets de paris sportifs sur le tennis. - Unités Statistiques: Échantillon aléatoire de 100 tickets. - Variables étudiées : W, Y, G, S, X.
+
+- W : Mon pari pour un joueur qui a plus de 59% de victoires est Gagnant ? V/F
+Nous avons choisi 59% après étude des effectifs, c'est un des taux de performances qui est à la fois élevé et qui regroupe de nombreux joueurs.
+- Y : ROI 
+- G : Sexe qui a le plus de ticket gagnants. Messieurs/Dames
+- S : Pourcentage de victoires parmi le sexe désigné par G.
+- X : Pourcentage de victoire d'un joueur en 2022
+
+(b) Description des variables: Nous utiliserons des tableaux de fréquences et des représentations graphiques pour décrire les variables sélectionnées, mettant particulièrement l'accent sur le genre et les performances des joueurs.
+
+## \textcolor[RGB]{34,139,34}{\fontsize{0.75em}{1.75em}\selectfont\textbf{C) Estimation Ponctuelle et par Intervalle de Confiance}}
+
+Nous effectuerons des estimations ponctuelles et par intervalle de confiance à niveau de confiance de 90% et 95% pour la moyenne et la variance empirique à chaque genre.
+
+## \textcolor[RGB]{34,139,34}{\fontsize{0.75em}{1.75em}\selectfont\textbf{D) Objectifs}}
+
+Analyse des Tickets Gagnants selon le Genre: Nous étudierons le taux de tickets gagnants chez les hommes par rapport aux femmes. Cette analyse aidera à déterminer si parier sur un sexe plutôt que l'autre influence l'incertitude dans nos résultats.
+
+```{r}
+library(readxl)
+library(stats)
+library(ggplot2)
+Base <- read_excel("BaseDonneesProjet.xlsm", sheet="Donnees", range="A1:I362")
+Base <- as.data.frame(Base)
+length(Base$Joueurs)
+BaseX <- Base[1:100, ]
+
+```
+
+
+# \textcolor{red}{\fontsize{1em}{1.75em}\selectfont\textbf{3. Graphiques}}
+
+## \textcolor[RGB]{34,139,34}{\fontsize{0.75em}{1.75em}\selectfont\textbf{A) Rendu Graphique 1}}
+
+```{r}
+addmargins(table(BaseX$Genres))
+addmargins(prop.table(table(BaseX$Genres)))
+pie(prop.table(table(BaseX$Genres)), main="Sexe", col=adjustcolor(rainbow(length(unique(BaseX$Genres))), alpha.f = 0.5))
+```
+
+
+```{r}
+breaks_Côtes <- seq(1,4.5,0.5)
+Côtes <- cut(BaseX$Côtes, breaks_Côtes)
+table(Côtes)
+prop.table(table(Côtes))
+barplot(prop.table(table(Côtes)), main = "Répartition des côtes", xlab = "Côtes", ylab = "Effectifs", col=adjustcolor(rainbow(length(unique(Côtes))), alpha.f=0.5))
+```
+
+Graphique 2 : La répartition des côtes semble logique dans la mesure où l'on étudie un placement récréatif, les parieurs ont un goût du risque relativement prononcé qui les dirigent majoritairement vers des côtes entre 1,5 et 2. Celle en dessous ont certes plus de chances de passer mais ne suscite pas d’intérêt pour les parieurs dû à leur goût du risque. On peut notamment penser au notion d'aversion aux risques en microéconomie. Ici les individus d'après les résultats ont un certain goût du risque
+
+```{r}
+breaks_Gains <- seq(0,50,5)
+Gains <- cut(BaseX$Gains, breaks_Gains)
+addmargins(table(Gains))
+addmargins(prop.table(table(Gains)))
+barplot(prop.table(table(Gains)), main="Répartition des gains", xlab="Gains", ylab="Effectifs", col=adjustcolor(rainbow(length(unique(Gains))), alpha.f=0.5))
+```
+
+Graphique 3 : La répartition des gains et la répartition des côtes sont les mêmes, cela montrerait donc que les paris perdus et gagnés sont équitablement et proportionnellement répartis.
+
+```{r}
+addmargins(table(BaseX$Genres))
+addmargins(prop.table(table(BaseX$Genres)))
+pie(prop.table(table(BaseX$Genres)), main="Sexe", col=adjustcolor(rainbow(length(unique(BaseX$Genres))), alpha.f = 0.5))
+```
+
+
+# \textcolor{red}{\fontsize{1em}{1.75em}\selectfont\textbf{4. Description variables}}
+
+```{r}
+x <- BaseX$PVictoire
+y <- BaseX$ROI
+
+# Filtrer pour les victoires et compter les victoires par genre
+victoires <- Base[BaseX$Résultats == "Gagné", ]
+nombre_victoires_H <- sum(victoires$Genres == "Messieurs")
+nombre_victoires_F <- sum(victoires$Genres == "Dames")
+if (nombre_victoires_H > nombre_victoires_F) {
+  BaseSexeG <- Base[BaseX$Genres == "Messieurs", ]
+} else {
+  BaseSexeG <- Base[BaseX$Genres == "Dames", ]
+}
+s <- ifelse(BaseSexeG$Résultats == "Gagné", 1, 0)
+
+pari_sup <- Base[BaseX$PVictoire >= 0.59, ]
+w <- ifelse(pari_sup$Résultats == "Gagné", 1, 0)
+
+sum(is.na(x))
+sum(is.na(y))
+sum(is.na(w))
+sum(is.na(s))
+
+x <- na.omit(x)
+w <- na.omit(w)
+
+N <- length(x)
+N2 <- length(y)
+N3 <- length(w)
+N4 <- length(s)
+
+n <- 100
+ech_x <- sample(x, n, replace = TRUE)
+ech_y <- sample(y, n, replace = TRUE)
+ech_w <- sample(w, n, replace = TRUE)
+ech_s <- sample(s, n, replace = TRUE)
+
+mx <- mean(ech_x)
+sprimex <- sd(ech_x)
+my <- mean(ech_y)
+sprimey <- sd(ech_y)
+mw <- mean(ech_w)
+ms <- mean(ech_s)
+sprimew <- sqrt(mw * (1 - mw))
+sprimes <- sqrt(ms * (1 - ms))
+
+```
+
+## \textcolor[RGB]{34,139,34}{\fontsize{0.75em}{1.75em}\selectfont\textbf{B) Rendu Grapique 2}}
+
+```{r}
+table(ech_w)
+table(ech_s)
+prop.table(table(ech_w))
+prop.table(table(ech_s))
+pie(prop.table(table(ech_w)), main = "Proportion des résultats", col=adjustcolor(rainbow(length(unique(ech_w))), alpha.f = 0.5))
+```
+
+Graphique 1 : Il s’agit de s’interroger sur la pertinence de ce résultat, est ce que le taux de victoire du genre dominant est suffisamment important pour juger le genre comme indice fiable : ce pourquoi on fera un test de conformité. 
+
+```{r}
+pie(prop.table(table(ech_s)), main = "Proportion de victoire pour le sexe qui gagne le plus", col=adjustcolor(rainbow(length(unique(ech_s))), alpha.f = 0.5))
+```
+
+Graphique 2 : La proportion des victoires semble importante, on s’intéresse donc à la fiabilité de cette variable qui s'avère peut-être représentative de l’état de forme du joueur et de sa qualité, nous effectuerons donc une analyse en établissant des intervalles de confiance sur sa moyenne et sa variance. 
+
+```{r}
+breaks_Y <- seq(-1,4,1)
+Y <- cut(ech_y, breaks_Y)
+addmargins(table(Y))
+addmargins(prop.table(table(Y)))
+barplot(prop.table(table(Y)), main = "Répartition des ROI", xlab = "ROI", ylab = "Effectifs", col=adjustcolor(rainbow(length(unique(Y))), alpha.f = 0.5))
+```
+
+Graphique 3 : Toute défaite mène à un ROI de -1 donc une grande partie (conférer nuage de points, partie 8.) des ROI sont entre -1 et 1. Le pari offre un rendement très volatile, donc risqué et la réussite d’un pari ne couvre que très rarement l’échec d’un autre.
+
+```{r}
+breaks_X <- seq(0,1,0.20)
+X <- cut(ech_x, breaks_X)
+addmargins(table(X))
+addmargins(prop.table(table(X)))
+barplot(prop.table(table(X)), main = "Répartition des PVictoire", xlab = "PVictoire", ylab = "Effectifs", col=adjustcolor(rainbow(length(unique(X))), alpha.f = 0.5))
+```
+
+Graphique 4 : Les parieurs se dirigent vers des joueurs performants cependant le nombre de joueurs avec un taux de victoires supérieurs à 70%(taux arbitraire) est très faible donc l’opportunité de parier sur eux est rare, d'autant que le lien entre pourcentage de victoire et chance de réussité du ticket reste à démontrer et dépend très probablement de nombreux facteurs extérieurs à notre analysé.Enfin on peut également faire l'hypthèse que le fait de parier sur des joeurs ayant un pourcentage de victoire élevé soit lié à la popularité du joueur (ce qui sort du cadre de notre analyse). 
+
+# \textcolor{red}{\fontsize{1em}{1.75em}\selectfont\textbf{5. Estimation ponctuelle et Estimation par intervalle de confiance}}
+
+## \textcolor[RGB]{34,139,34}{\fontsize{0.75em}{1.75em}\selectfont\textbf{A) Estimation ponctuelle et par IC}}
+
+```{r}
+
+# Q3- Estimation de la moyenne theorique de W : Mon pari pour un joueur qui a plus de x% de victoires est Gagnant ?
+
+# estimation ponctuelle
+xbar <- mw
+xbar 
+
+#Estimation par IC
+
+# si sigma est inconnu
+
+scor <- sprimew
+
+# Test à 95%
+a2 <- xbar - qnorm(0.975) * scor / sqrt(length(BaseX)-1)
+b2 <- xbar + qnorm(0.975) * scor / sqrt(length(BaseX)-1)
+c(a2, b2)
+
+# Test à 90%
+a20 <- xbar - qnorm(0.95) * scor / sqrt(length(BaseX)-1)
+b20 <- xbar + qnorm(0.95) * scor / sqrt(length(BaseX)-1)
+c(a20, b20)
+# Q4- Estimation de la variance theorique
+
+# si m est inconnu
+
+# estimation ponctuelle
+varcor <- sprimew
+varcor
+
+# estimation par IC 
+
+# Test à 95%
+a4 <- (length(BaseX) - 1) * varcor / qchisq(0.975, length(BaseX) - 1)
+b4 <- (length(BaseX) - 1) * varcor / qchisq(0.025, length(BaseX) - 1)
+c(a4, b4)
+
+# Test à 90%
+a40 <- (length(BaseX) - 1) * varcor / qchisq(0.95, length(BaseX) - 1)
+b40 <- (length(BaseX) - 1) * varcor / qchisq(0.05, length(BaseX) - 1)
+c(a40, b40)
+```
+
+Analyse : 
+
+- Les intervalles de confiance sont des plages de valeurs qui fournissent une estimation de l'incertitude associée aux estimations ponctuelles.
+- Un intervalle de confiance plus étroit indique une estimation plus précise.
+- Les résultats sont basés sur la longueur de la base de données (BaseX) et la connaissance théorique de la distribution de la variable W.
+
+Le fait que l'estimation ponctuelle appartienne à l'intervalle de confiance indique une cohérence interne dans les résultats. Cela est en accord avec les principes statistiques attendus et fournit une validation supplémentaire de la procédure d'estimation utilisée. Voici quelques points à considérer :
+
+- Consistance : Lorsque l'estimation ponctuelle (la moyenne théorique ou la variance théorique) se trouve à l'intérieur de l'intervalle de confiance, cela suggère que la procédure d'estimation est cohérente avec les données observées.
+
+- Validité des Intervalles de Confiance : Les intervalles de confiance sont construits pour contenir la vraie valeur du paramètre avec une certaine probabilité (95% ou 90% dans ce cas). Le fait que l'estimation ponctuelle se situe dans l'intervalle de confiance suggère que l'intervalle est capable de capturer la vraie valeur du paramètre avec la probabilité spécifiée.
+
+- Précision de l'Estimation : Si l'estimation ponctuelle est proche du centre de l'intervalle de confiance, cela indique une précision relativement élevée de l'estimation. Si l'intervalle est large, cela peut indiquer une incertitude plus importante, mais l'estimation ponctuelle reste compatible avec cette incertitude.
+
+--> C'est ici le cas pour la moyenne mais relativement peu le cas pour la variance. 
+
+En résumé, le fait que l'estimation ponctuelle soit comprise dans l'intervalle de confiance renforce la confiance dans la validité des résultats et la robustesse de la méthode d'estimation utilisée. Cela ne garantit pas nécessairement que la vraie valeur du paramètre est exactement égale à l'estimation ponctuelle, mais cela fournit des indices quant à la fiabilité de l'estimation.
+
+# \textcolor{red}{\fontsize{1em}{1.75em}\selectfont\textbf{6. Test de conformité}}
+
+### \textcolor[RGB]{3,34,76}{\fontsize{0.78em}{1.75em}\selectfont\textbf{\underline{Explication de la côte de pot :}}}
+
+La théorie de la côte de pot (ou "pot odds" en anglais) est un concept clé dans le poker et d'autres jeux de hasard impliquant des mises. Elle permet de prendre des décisions rationnelles sur la base des gains potentiels par rapport au risque encouru. Calcul : 
+
+Côte de Pot=Taille du Pot / Mise Requise
+
+Côte de pot : La côte de pot est le rapport entre la taille du pot et la mise que vous devez faire pour rester dans le jeu. Par exemple, si le pot est de 100 € et que vous devez miser 10 € pour rester dans le jeu, la côte de pot est de 10:1.
+
+Pour notre étude du paris on considérera que la côte de pot est égale à la côte du pari, en effet il faut payer 1 pour obtenir 1 fois la côte de gains. Donc côte de pot = côte du pari : 1.
+On évalue ensuite la probabilité que nous avons de gagner ce pari. Nous considérons alors que c’est ici la fréquence empirique de S.
+
+Enfin, nous comparons la côte avec notre probabilité de gain. Le pari est jugé rentable à long terme si notre probabilité de gain est supérieure à la côte de pot.
+Nous allons donc procéder à un test de conformité qui nous permettra de savoir si la fréquence empirique de S est suffisamment importante pour considérer le pari sur un genre en particulier comme rentable à long terme.
+
+### \textcolor[RGB]{3,34,76}{\fontsize{0.78em}{1.75em}\selectfont\textbf{\underline{Hypothèse:}{ S suit approximativement une loi Bernoulli, avec un échantillon de n = 100 > 30}}}
+
+```{r}
+victoires <- BaseX[BaseX$Résultats == "Gagné", ] # Base des tickets gagnants 
+victoires_Messieurs <- subset(victoires, Genres == "Messieurs") # Base des tickets gagnants des Messieurs
+victoires_Dames <- subset(victoires, Genres == "Dames") # Base des tickets gagnants des Dames
+BaseSexeH <- BaseX[BaseX$Genres == "Messieurs", ] # Base des tickets Messieurs (Gagné et perdu)
+BaseSexeF <- BaseX[BaseX$Genres == "Dames", ] # Base des tickets Dames (Gagné et perdu)
+percent_VH <- nrow(victoires_Messieurs)/nrow(BaseSexeH) # pourcentage de tickets gagnant des Messieurs 
+percent_VF <- nrow(victoires_Dames)/nrow(BaseSexeF) # pourcentage de tickets gagnant des Dames 
+
+if (percent_VH > percent_VF) {
+  BaseSexeV <- BaseSexeH
+} else {
+  BaseSexeV <- BaseSexeF
+}
+
+if (percent_VH > percent_VF) {
+  victoires_Final <- victoires_Messieurs
+} else {
+  victoires_Final <- victoires_Dames
+}
+
+if (percent_VH > percent_VF) {
+  BaseCotesV <- BaseSexeH
+} else {
+  BaseCotesV <- BaseSexeF
+}
+
+if (percent_VH > percent_VF) {
+  percent_Final <- percent_VH
+} else {
+  percent_Final <- percent_VF
+}
+
+nps <- nrow(BaseSexeV)
+CôtesPot <- 1/mean(BaseCotesV$Côtes)
+
+# Test à droite sur une fréquence
+# HO: p=cotes de pot vs H1: p>cotes de pot
+prop.test(nrow(victoires_Final),nps,p=CôtesPot,alternative = 'greater', correct = FALSE)
+c <- (CôtesPot) + (qnorm(0.95) * (percent_Final*(1-percent_Final)/sqrt(nrow(BaseSexeV))))
+c
+c2 <- (CôtesPot) + (qnorm(0.9) * (percent_Final*(1-percent_Final)/sqrt(nrow(BaseSexeV))))
+c2
+```
+
+On effectue donc un test de fréquence unilatéral à droite avec les hypothèses suivantes : 
+
+$S\left\{ \begin{array}{c}
+H_0:p=\text{CôtesPot} \\
+H_1:p>\text{CôtesPot} 
+\end{array} \right.$
+
+
+- Ici l'erreur de première espèce consiste à dire que le pari est rentable à long terme alors qu'il ne l'est pas. 
+- L'erreur de deuxième espèce est secondaire, il s'agit de déclarer le pari non rentable alors qu'il l'est. 
+
+On ne cherche pas à minimiser le risque de perte, donc il s'agit avec ce test de limiter le risque de première espèce. 
+
+D'après les résultats on a F = 0,67185 > c = 0,578, donc on rejette H0 au seuil de 5%. Ce résultat est confirmé par la p-value qui est de 1,2% ce qui est bien inférieur au seuil de 5% et de 10%. Au deux seuil, 5% et 10%, H0 est rejettée. Le pari à long terme sur le sexe qui à la fréquence de gain la plus élevé parait donc rentable. 
+
+Il est donc intéressant d'après l'analyse sur notre échantillon de parier sur le sexe ayant la fréquence empirique de ticket gagnant la plus importante. Cela reste cependant un résultat à nuancer, l'échantillon restant de taille modeste.  
+
+# \textcolor{red}{\fontsize{1em}{1.75em}\selectfont\textbf{7. Test de comparaison}}
+
+Nous effectuons un test de comparaison sur le ROI moyen pour des tickets sur des joueurs masculins ("Messieurs") et le  ROI moyen pour des tickets sur des joueuses ("Dames") afin de déterminer si il y a un intérêt concret à parier sur un genre en particulier. 
+
+## \fontsize{0.75em}{1.75em}\selectfont\textbf{Le premier test compare l'égalité des variances entre les deux groupes afin de fiabiliser les tests suivants :}}
+$$
+\begin{cases}
+H_0: \sigma_1 = \sigma_2 \quad \text{Les variances des deux groupes sont égales} \\
+H_1: \sigma_1 \neq \sigma_2 \quad \text{Les variances sont différentes}
+\end{cases}
+$$
+```{r}
+# Q1. x1 = rendt des PT, x2 = rendt des PNT
+base1 <- subset (BaseX, Genres=='Messieurs') 
+base2 <- subset (BaseX, Genres=='Dames') 
+x1 <- base1$ROI 
+x2 <-  base2$ROI
+xbar1 <- mean(x1)
+xbar2 <- mean(x2)
+
+# Q2. Test de HO: m1=m2 vs H1: m1>m2 (m1 les hommes et m2 les femmes)
+# Test égalité des variances et des moyennes avant de faire le test de comparaison 
+
+# HO: sig1=sig2 vs H1: sig1 ≠ sig2
+var.test(x1,x2,alternative="two.sided")
+```
+
+En examinant le test de variances, la non-rejection de l'hypothèse nulle (p-value = 34% > 5% ) suggère que les variances des deux groupes pourraient être égales, ce qui renforce la validité des comparaisons effectuées. La p-value supérieure à 5% ou 10% confirme cette conclusion, indiquant une cohérence avec l'hypothèse d'égalité des variances.
+
+## \fontsize{0.75em}{1.75em}\selectfont\textbf{Deuxième test (t-test pour des moyennes différentes avec variances égales) :}}
+
+Les variances sont donc supposées égales d'après le test précèdent et l'échantillon est gaussien. 
+$$
+\begin{cases}
+H_0: m_1 = m_2 \quad \text{Les moyennes des deux groupes sont égales} \\
+H_1: m_1 > m_2 \quad \text{La moyenne du premier groupe est significativement plus grande que celle du deuxième groupe}
+\end{cases}
+$$
+```{r}
+# HO: M1=m2 vs H1: m1>m2
+# ou HO: m1-m2=0 vs H1: m1-m2>0
+t.test(x1,x2,alternative = 'greater', var.equal=TRUE)
+```
+
+Le deuxième test t rejette l'hypothèse nulle (p-value = 4% < 5% < 10%), mettant en lumière une différence significative entre les moyennes des rendements sur investissement des hommes et des femmes. Cette conclusion, bien que dépendante de l'échantillon, suggère que, globalement, les rendements sur investissement des tickets sur les hommes sont statistiquement plus élevés que ceux sur les femmes.
+
+## \fontsize{0.75em}{1.75em}\selectfont\textbf{Troisième test (t-test pour une différence de moyenne inférieure à une valeur spécifiée) :}}
+
+On considère qu'une différence de 10% dans le ROI est non négligeable et constitue un écart suffisant pour décider de parier sur un genre plutôt qu'un autre.
+
+$$
+\begin{cases}
+H_0: m_1 - m_2 \geq 0.1 \quad \text{La différence entre les moyennes des deux groupes est supérieure ou égale à 0,1} \\
+H_1: m_1 - m_2 < 0.1 \quad \text{La différence entre les moyennes des deux groupes est inférieure à 0,1}
+\end{cases}
+$$
+
+```{r}
+# Q3. Test de HO: m1-m2>=0,1 vs H1: m1-m2<0,1
+t.test(x1,x2,mu=0.1,alternative ='less')
+```
+
+Le résultat du test présente une p-value de 0.8876 = 88% > 10% > 5%, ce qui indique que la probabilité d'observer une différence supérieur à 0,1 dans le ROI entre les deux groupes est très élevée, 
+
+### \textcolor[RGB]{3,34,76}{\fontsize{0.78em}{1.75em}\selectfont\textbf{\underline{Conclusion:}}}
+
+D'après les résultats du test on constate bien que du point de vue du ROI, il est plus interressant de parier sur un joueur masculin, le ROI moyen de ces tickets étant statistiquement supérieur au ROI moyen des tickets sur les joeuses avec un test sur une différence de 0.1 points entre les deux. 
+
+En réalité selon l'échantillon tiré les résultats peuvent être différent et possiblement les résultats peuvent être à l'inverse non concluant. Il ne s'agit que d'une preuve statistique sur un échantillon réduit. 
+
+# \textcolor{red}{\fontsize{1em}{1.75em}\selectfont\textbf{8. Test d'indépendance}}
+
+## \textcolor[RGB]{34,139,34}{\fontsize{0.75em}{1.75em}\selectfont\textbf{A) Test d'indépendance}}
+
+```{r}
+
+BaseY <- Base[1:100, ]
+PDSBB <- BaseY$ROI
+PDSM <- BaseY$PVictoire
+TOTAL <- sum
+TOUT <- sum
+min_ROI <- min(PDSBB)
+max_ROI <- max(PDSBB)
+min_PV <- min(PDSM)
+max_PV <- max(PDSM)
+
+min_ROI 
+max_ROI
+min_PV 
+max_PV
+#Question 1 - Tableau de contingence empirique
+#Variables quantitatives => regroupement par classe
+
+PDSM_borne <- seq(0.35,0.876,0.1315)
+summary(PDSM)
+PDSBB_borne <- seq(-1.01,3.51,1.13)
+summary(PDSBB)
+
+#Face à la dispersion des variables, pour la fiabilité du test du chi-deux on opère à un regroupement de classe
+
+PDSBB_borne <- c(-1.01, 0.15, 3.51)
+PDSM_borne <- c(0.35,0.613,0.876)
+
+PDSM_cut <- cut (PDSM, PDSM_borne)
+PDSBB_cut <- cut (PDSBB,PDSBB_borne)
+length(PDSBB_cut)
+
+TC_emp <- table(PDSM_cut,PDSBB_cut)
+addmargins(TC_emp, FUN = TOTAL)
+
+TC_emp2 <- addmargins (TC_emp)
+colnames (TC_emp2) <- c('Négatif','Positif','TOTAL')
+rownames (TC_emp2) <- c('Faible','Élevé','TOTAL')
+TC_emp2
+
+#Q2 Tableau profil-lignes (PDSBB/PDSM)
+addmargins (prop.table (addmargins (TC_emp, 1, FUN=TOUT), 1), 2, FUN=TOTAL)
+TPL <- addmargins (prop.table(addmargins(TC_emp,1),1),2)
+colnames (TPL) <- c('Négatif','Positif','TOTAL')
+rownames (TPL) <- c('Faible','Élevé','TOUT')
+TPL
+
+#Q3 Tableau profil-colonnes (PDSM/PDSBB)
+TPC <- addmargins (prop.table(addmargins(TC_emp,2),2),1)
+colnames (TPC) <- c('Négatif','Positif','TOUT')
+rownames (TPC) <- c('Faible','Élevé','TOTAL')
+TPC
+
+#Q4 Test d'indépendance du chi-deux
+
+resu <- chisq.test(PDSM_cut,PDSBB_cut,correct=FALSE) #p-value >0,05 donc on ne rejette pas H0,
+#le poids du ROI ne dépend pas du poids du pourcentage de victoire  
+resu
+resu$expected # effectif joint supérieur à df = 4
+
+#Q5 - Coefficient de corrélation 
+
+cor(PDSM,PDSBB) # si coef proche de 0 -> absence de liaison 
+```
+
+Analyse : On ne rejette pas l'hypothèse nulle étant donné que la p-value est supérieur au seuil de 5% et 10%. Ce qui corrobore le résultat du coefficient de corrélation, qui étant relativement proche de 0 indique bien une indépendance entre le ROI et le pourcentage de victoire du joueur. Comme énoncé au début du projet sur l'analyse du graphique, d'autres facteurs tendent à rentrer en compte et rendent impossible de considérer statistiquement un lien entre ces deux variables qui permettrait de réduire les pertes en fonction de ces deux critères.  
+
+De plus le test d'indépendance est considéré comme précis, tout les effectifs croisés sont supérieur à 4.
+
+## \textcolor[RGB]{34,139,34}{\fontsize{0.75em}{1.75em}\selectfont\textbf{B) Nuage de points}}
+
+```{r}
+# Q5 - Nuage de points des 2 variables avec seulement les données utilisées
+
+plot(PDSM, PDSBB, main="Liaison entre PDSBB et PDSM", xlab="poids du pourcentage de victoire", ylab="poids du ROI", col=adjustcolor("blue", alpha.f=0.5))
+
+```
+
+Le nuage de points via également confirmer les analyses et les résultats du test du chi-deux d'indépendance. Leur répartition aléatoire et désordonné montre l'indépendance des deux variables. Pour ce qui est de la ligne à -1, elle s'explique simplement par la nature du pari, qui dès lors qu'il est perdu, le ROI est mécaniquement égale à -1. 
